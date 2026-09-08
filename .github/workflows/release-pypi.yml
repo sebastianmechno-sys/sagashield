@@ -21,10 +21,13 @@ jobs:
             manylinux: auto
           # macOS universal2 (Intel + Apple Silicon, single universal wheel)
           - os: macos-latest
-            maturin-args: --release --features python --universal2 --interpreter python3.10 python3.11 python3.12
+            maturin-args: --release --features python --target universal2-apple-darwin --interpreter python3.10 python3.11 python3.12
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          # universal2 needs both Apple toolchains present
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
       - uses: Swatinem/rust-cache@v2
         with:
           key: pypi-${{ matrix.os }}
