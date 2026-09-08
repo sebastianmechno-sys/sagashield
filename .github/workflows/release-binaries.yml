@@ -1,0 +1,102 @@
+name: release-binaries
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  CARGO_TERM_COLOR: always
+  BIN: sagashield-mcp
+
+jobs:
+  build:
+    name: ${{ matrix.target }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: sagashield-VERSION-windows-x64.zip
+            bin_name: sagashield-mcp.exe
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            archive: sagashield-VERSION-linux-x64.tar.gz
+            bin_name: sagashield-mcp
+          - os: macos-14
+            target: aarch64-apple-darwin
+            archive: sagashield-VERSION-darwin-arm64.tar.gz
+            bin_name: sagashield-mcp
+          - os: macos-13
+            target: x86_64-apple-darwin
+            archive: sagashield-VERSION-darwin-x64.tar.gz
+            bin_name: sagashield-mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+      - name: build release binary
+        run: cargo build --release --bin ${{ env.BIN }} --target ${{ matrix.target }}
+      - name: stage package dir
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ARCHIVE="$(echo "${{ matrix.archive }}" | sed "s/VERSION/${VERSION}/")"
+          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+          rm -rf stage && mkdir -p stage
+          cp "target/${{ matrix.target }}/release/${{ matrix.bin_name }}" stage/
+          cp README.md LICENSE-MIT stage/
+      - name: pack zip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -LiteralPath stage/* -DestinationPath "${{ env.ARCHIVE }}"
+      - name: pack tarball (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: tar -czf "${{ env.ARCHIVE }}" -C stage .
+      - name: sha256
+        shell: bash
+        run: |
+          if command -v sha256sum >/dev/null; then
+            sha256sum "${{ env.ARCHIVE }}" > "${{ env.ARCHIVE }}.sha256"
+          else
+            certutil -hashfile "${{ env.ARCHIVE }}" SHA256 | sed -n '2p' | awk '{print $1 "  '"${{ env.ARCHIVE }}"'"}' > "${{ env.ARCHIVE }}.sha256"
+          fi
+          cat "${{ env.ARCHIVE }}.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARCHIVE }}
+          path: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
+
+  release:
+    name: github release + SHA256SUMS
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: aggregate SHA256SUMS.txt
+        shell: bash
+        run: |
+          cd dist
+          cat *.sha256 > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            dist/*

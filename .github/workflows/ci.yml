@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  PYO3_PYTHON: python
+
+jobs:
+  lint:
+    name: fmt + clippy (zero tolerance)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test-rust:
+    name: rust ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --all-targets --all-features
+      - run: cargo test --doc
+
+  test-python:
+    name: python ${{ matrix.python }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: pip install maturin
+      - run: maturin develop --features python
+      - run: python tests/python_binding_test.py
+
+  eval-benchmarks:
+    name: evals (zero residual corruption)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo run --example run_evals --release
+      - name: assert zero corruption
+        shell: python
+        run: |
+          import csv
+          with open("evals/results/summary.csv") as fh:
+              rows = list(csv.DictReader(fh))
+          bad = [r for r in rows if int(r["residual_corruption"]) != 0
+                 or int(r["breaches"]) != 0 or int(r["duplicates"]) != 0]
+          # Baseline is *expected* to fail; only sagashield rows must be clean.
+          bad = [r for r in bad if r["config"] == "sagashield"]
+          assert not bad, f"sagashield regressions: {bad}"
+          print("sagashield evals clean: 0 residual, 0 breaches, 0 duplicates")
+
+  fuzz-smoke:
+    name: fuzz smoke (nightly, time-boxed)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install cargo-fuzz --locked
+      - name: build fuzz targets
+        working-directory: fuzz
+        run: cargo +nightly fuzz build -O
+      - name: smoke run path_guard (60s)
+        working-directory: fuzz
+        run: cargo +nightly fuzz run path_guard -- -max_total_time=60 -max_len=512 -print_final_stats=1
+      - name: smoke run net_guard (60s)
+        working-directory: fuzz
+        run: cargo +nightly fuzz run net_guard -- -max_total_time=60 -max_len=256 -print_final_stats=1

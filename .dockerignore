@@ -1,0 +1,32 @@
+# Rust build artifacts
+target/
+# VCS
+.git/
+.gitignore
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# Generated eval artifacts (reproducible via `cargo run --example run_evals`)
+evals/results/
+# Local run state (sandbox output, MCP databases, demo leftovers)
+workspace/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+agent_demo_output.txt
+agent_test_output.txt
+# Local packaging output
+dist/
+# Fuzz corpora artifacts (reproducible)
+fuzz/artifacts/
+fuzz/corpus/
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

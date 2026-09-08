@@ -1,0 +1,30 @@
+{
+  "name": "sagashield-marketplace",
+  "description": "ACID transactional Saga runtime, Step-0 security guardrail, and MCP server for autonomous AI agents.",
+  "version": "0.1.0",
+  "owner": {
+    "name": "SagaShield Contributors"
+  },
+  "metadata": {
+    "description": "Claude Code marketplace for the sagashield MCP server (sagashield-mcp over stdio).",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "sagashield",
+      "source": "./",
+      "description": "Transactional tool execution with SQLite WAL Saga rollback, FSM guardrails, Step-0 sandboxing, idempotency, replay and OpenTelemetry audit.",
+      "version": "0.1.0",
+      "author": {
+        "name": "SagaShield Contributors"
+      },
+      "mcpServers": {
+        "sagashield": {
+          "command": "sagashield-mcp",
+          "args": [],
+          "description": "Run `cargo build --release --bin sagashield-mcp` and ensure the binary is on PATH, or set an absolute command path."
+        }
+      }
+    }
+  ]
+}

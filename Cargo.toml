@@ -1,0 +1,33 @@
+[package]
+name = "sagashield"
+version = "0.1.0"
+edition = "2024"
+description = "ACID transactional Saga runtime, Step-0 security guardrail, and MCP server for autonomous AI agents."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/sebastianmechno-sys/sagashield"
+documentation = "https://docs.rs/sagashield"
+readme = "README.md"
+keywords = ["ai", "agents", "mcp", "transactions", "saga"]
+categories = ["asynchronous", "development-tools", "command-line-utilities"]
+
+[[bin]]
+name = "sagashield-mcp"
+path = "src/bin/sagashield-mcp.rs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+rusqlite = { version = "0.31", features = ["bundled", "uuid"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.8", features = ["v4", "serde"] }
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+async-trait = "0.1"
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py38"], optional = true }
+
+[features]
+python = ["dep:pyo3"]

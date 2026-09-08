@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sagashield": {
+      "command": "C:\\agent-kernel\\target\\release\\sagashield-mcp.exe",
+      "args": [],
+      "cwd": "C:\\agent-kernel"
+    }
+  }
+}

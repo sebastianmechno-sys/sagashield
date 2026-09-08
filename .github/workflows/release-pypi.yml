@@ -1,0 +1,78 @@
+name: release-pypi
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  wheels:
+    name: wheel ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows x64 (cp38-abi3 via maturin)
+          - os: windows-latest
+            maturin-args: --release --features python --interpreter python3.10 python3.11 python3.12
+          # Linux x64 manylinux (cp38-abi3 via maturin)
+          - os: ubuntu-latest
+            maturin-args: --release --features python --interpreter python3.10 python3.11 python3.12
+            manylinux: auto
+          # macOS universal2 (Intel + Apple Silicon, single universal wheel)
+          - os: macos-latest
+            maturin-args: --release --features python --universal2 --interpreter python3.10 python3.11 python3.12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: pypi-${{ matrix.os }}
+      - name: build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          manylinux: ${{ matrix.manylinux || 'off' }}
+          args: ${{ matrix.maturin-args }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: target/wheels/*
+
+  sdist:
+    name: source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: target/wheels/*
+
+  publish:
+    name: publish to PyPI
+    needs: [wheels, sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/sagashield
+    permissions:
+      # Trusted Publishing (OIDC): no token needed when the PyPI project
+      # is configured with this repo as publisher. Falls back to PYPI_API_TOKEN.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: publish to PyPI (OIDC preferred, token fallback)
+        # If PYPI_API_TOKEN is unset, the empty password makes the action
+        # fall back to OIDC Trusted Publishing (id-token: write above).
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

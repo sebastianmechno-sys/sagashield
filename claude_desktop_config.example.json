@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sagashield": {
+      "command": "C:\\agent-kernel\\target\\release\\sagashield-mcp.exe",
+      "args": [],
+      "cwd": "C:\\agent-kernel",
+      "_comment": "Windows: compila con `cargo build --release`, poi incolla questo file in %APPDATA%\\Claude\\claude_desktop_config.json e riavvia Claude Desktop."
+    }
+  },
+  "_notes": {
+    "macOS/Linux": "usa 'command': '/path/to/sagashield/target/release/sagashield-mcp' e 'cwd': '/path/to/sagashield'. Il server crea ./workspace (sandbox) e ./sagashield-mcp.db (WAL) nella cwd.",
+    "protocol": "JSON-RPC 2.0 su stdio, protocolVersion 2024-11-05. Tool esposti: fs_write, mock_pay, kernel_status, agent_kernel_exec, kernel_replay_session, kernel_export_audit."
+  }
+}
