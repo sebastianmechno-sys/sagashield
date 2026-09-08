@@ -52,9 +52,24 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: pip install maturin
-      - run: maturin develop --features python
-      - run: python tests/python_binding_test.py
+      - run: python -m venv .venv
+      # maturin develop requires an active virtualenv: drive it explicitly
+      # per-OS (venv layouts differ between Unix and Windows).
+      - name: build + test (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          .venv/bin/pip install maturin
+          VIRTUAL_ENV="$PWD/.venv" .venv/bin/maturin develop --features python
+          .venv/bin/python tests/python_binding_test.py
+      - name: build + test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .venv/Scripts/pip install maturin
+          $env:VIRTUAL_ENV = "$PWD/.venv"
+          .venv/Scripts/maturin develop --features python
+          .venv/Scripts/python tests/python_binding_test.py
 
   eval-benchmarks:
     name: evals (zero residual corruption)

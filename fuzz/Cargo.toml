@@ -23,4 +23,13 @@ libfuzzer-sys = "0.4"
 [dependencies.sagashield]
 path = ".."
 
+# Explicit bins: cargo-fuzz and plain `cargo build --bins` both work.
+[[bin]]
+name = "path_guard"
+path = "fuzz_targets/path_guard.rs"
+
+[[bin]]
+name = "net_guard"
+path = "fuzz_targets/net_guard.rs"
+
 [workspace]

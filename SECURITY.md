@@ -20,9 +20,10 @@ check, the WAL write, or any side effect.
 - **Kernel-enforced isolation.** There is no seccomp/Landlock profile, no
   AppContainer, no container boundary. A compromised *process* (as opposed to
   a confused *agent*) is out of scope for this layer.
-- **8.3 short-name resolution.** Components matching the tilde pattern
-  (`ENV~1`) are *blocked conservatively*, which may over-block legitimate
-  names containing `~<digit>`. This tradeoff is intentional and documented.
+- **8.3 short-name scope.** Tilde-pattern blocking applies to the final
+  path component only; parent directories containing `~<digit>` (e.g. CI
+  temp dirs like `RUNNER~1`) are legitimate and resolved via
+  canonicalization when present. Documented tradeoff, covered by tests.
 
 **Planned confinement.** Linux: Landlock ABI (unprivileged path sandboxing
 per saga). Windows: AppContainer integrity levels for tool workers. Until
@@ -66,7 +67,8 @@ workers; treat the whitelist as prompt-injection defense, not as a firewall.
 | `../../` traversal, absolute outsiders | Lexical normalization + strict `starts_with` on allowed roots |
 | Symlink pointing outside | Best-effort canonicalization + re-check (`PathTraversalDetected`) |
 | `.env␣` / `foo.txt.` Win32 normalization | Trailing dots/spaces stripped before screening |
-| `ENV~1` 8.3 short names | Tilde+digit components blocked (`BlockedFileAccess`) |
+| `ENV~1` 8.3 short names (final component) | Tilde+digit filenames blocked (`BlockedFileAccess`); parent dirs with `~N` (e.g. CI temp `RUNNER~1`) are legitimate and resolved via canonicalization when present |
+| Backslash in names (any OS) | Rejected as non-portable: separator on Windows, confusion vector elsewhere |
 | `file.txt:evil` ADS | `:` in real filename components blocked |
 | `CON`/`NUL`/`COM1` devices | Reserved-name stems blocked (any component) |
 | `api.stripe.com.attacker.com`, `user@host` tricks | Authority parsing + exact-or-subdomain whitelist match |

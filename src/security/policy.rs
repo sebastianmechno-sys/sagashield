@@ -93,7 +93,9 @@ impl SecurityGuard for SecurityPolicy {
         }
 
         // 2. Screening per-componente (case-insensitive, forma normalizzata Win32).
-        for component in normalized.components() {
+        let components: Vec<Component<'_>> = normalized.components().collect();
+        for (index, component) in components.iter().enumerate() {
+            let is_last = index + 1 == components.len();
             let raw = component.as_os_str().to_string_lossy().to_lowercase();
             // Win32/NTFS ignora trailing dots e trailing spaces
             // (`foo.txt.` → `foo.txt`, `.env ` → `.env`): giudica la forma
@@ -111,17 +113,29 @@ impl SecurityGuard for SecurityPolicy {
                     )));
                 }
             }
-            // 3. Alternate Data Streams (`file.txt:evil`) — solo su nomi reali,
-            // mai su prefissi drive (`C:`) o root.
-            if matches!(component, Component::Normal(_)) && text.contains(':') {
-                return Err(KernelError::BlockedFileAccess(format!(
-                    "path '{}' contains Alternate Data Stream marker ':'",
-                    normalized.display()
-                )));
+            // 3. Alternate Data Streams (`file.txt:evil`) e backslash fuori
+            // posto — solo su nomi reali, mai su prefissi drive (`C:`) o root.
+            // Il backslash è separatore su Windows e carattere confusivo
+            // altrove: la sandbox impone nomi portabili su ogni piattaforma.
+            if matches!(component, Component::Normal(_)) {
+                if text.contains(':') {
+                    return Err(KernelError::BlockedFileAccess(format!(
+                        "path '{}' contains Alternate Data Stream marker ':'",
+                        normalized.display()
+                    )));
+                }
+                if text.contains('\\') {
+                    return Err(KernelError::BlockedFileAccess(format!(
+                        "path '{}' contains backslash (non-portable name)",
+                        normalized.display()
+                    )));
+                }
             }
-            // 4. Nomi corti 8.3 (`ENV~1`, `DOCUME~1`): alias che aggirano la
-            // blocklist sui volumi NTFS con generazione abilitata.
-            if has_shortname_pattern(text) {
+            // 4. Nomi corti 8.3 (`ENV~1`, `DOCUME~1`): solo sul componente
+            // finale. Le directory parent con `~N` (es. `RUNNER~1` nei temp
+            // di CI) sono legittime e risolte via canonicalizzazione quando
+            // esistono; bloccarle romperebbe path perfettamente validi.
+            if is_last && has_shortname_pattern(text) {
                 return Err(KernelError::BlockedFileAccess(format!(
                     "path '{}' looks like an 8.3 short filename (tilde pattern)",
                     normalized.display()
@@ -253,8 +267,9 @@ fn extract_host(domain_or_url: &str) -> KernelResult<String> {
 ///
 /// Su NTFS con generazione dei nomi corti abilitata, `ENV~1` può risolvere
 /// allo stesso file di un nome bloccato (es. un file contenente `.env`),
-/// aggirando una blocklist puramente lessicale. Blocco conservativo:
-/// documentato in SECURITY.md come possibile over-blocking.
+/// aggirando una blocklist puramente lessicale. Applicato al solo componente
+/// finale: le directory parent con `~N` sono legittime (es. temp di CI).
+/// Blocco conservativo, documentato in SECURITY.md come over-blocking noto.
 fn has_shortname_pattern(component_lower: &str) -> bool {
     component_lower
         .as_bytes()
