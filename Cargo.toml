@@ -1,6 +1,6 @@
 [package]
 name = "sagashield"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2024"
 description = "ACID transactional Saga runtime, Step-0 security guardrail, and MCP server for autonomous AI agents."
 license = "MIT OR Apache-2.0"

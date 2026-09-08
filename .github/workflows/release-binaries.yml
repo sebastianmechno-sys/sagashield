@@ -54,7 +54,8 @@ jobs:
       - name: pack zip (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: Compress-Archive -LiteralPath stage/* -DestinationPath "${{ env.ARCHIVE }}"
+        # NOTE: -LiteralPath does NOT expand wildcards; -Path does.
+        run: Compress-Archive -Path stage/* -DestinationPath "${{ env.ARCHIVE }}"
       - name: pack tarball (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -64,8 +65,12 @@ jobs:
         run: |
           if command -v sha256sum >/dev/null; then
             sha256sum "${{ env.ARCHIVE }}" > "${{ env.ARCHIVE }}.sha256"
+          elif command -v shasum >/dev/null; then
+            # macOS ships shasum instead of sha256sum
+            shasum -a 256 "${{ env.ARCHIVE }}" > "${{ env.ARCHIVE }}.sha256"
           else
-            certutil -hashfile "${{ env.ARCHIVE }}" SHA256 | sed -n '2p' | awk '{print $1 "  '"${{ env.ARCHIVE }}"'"}' > "${{ env.ARCHIVE }}.sha256"
+            echo "no sha256 tool available" >&2
+            exit 1
           fi
           cat "${{ env.ARCHIVE }}.sha256"
       - uses: actions/upload-artifact@v4

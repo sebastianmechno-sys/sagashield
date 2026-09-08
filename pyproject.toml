@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "sagashield"
-version = "0.1.0"
+version = "0.1.2"
 description = "ACID transactional Saga runtime, Step-0 security guardrail, and MCP server for autonomous AI agents."
 readme = "README.md"
 requires-python = ">=3.8"

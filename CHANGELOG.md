@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] — v0.2.0-unreleased
 
+## [0.1.2] — 2026-09-08
+
+### Fixed
+- Release pipeline: Windows zip uses `Compress-Archive -Path` (wildcards
+  don't expand under `-LiteralPath`); macOS checksum via `shasum -a 256`
+  fallback; PyPI universal2 wheel via `--target universal2-apple-darwin`
+  with both Apple toolchains.
+
+## [0.1.1] — 2026-09-08
+
+### Fixed
+- CI on hosted runners: 8.3 short-name filter scoped to the final path
+  component (CI temp dirs like `RUNNER~1` are legitimate); backslash
+  rejected in names on every OS; explicit `[[bin]]` targets in
+  `fuzz/Cargo.toml`; Python CI drives maturin inside a venv.
+
 ### Added
 - Claude Code plugin marketplace manifest (`.claude-plugin/marketplace.json`,
   installable via `/plugin marketplace add`).
@@ -61,5 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   returned `NULL` and violated `NOT NULL` constraints).
 - `async fn` trait object-safety via `async-trait` for the tool registry.
 
-[Unreleased]: https://github.com/sebastianmechno-sys/sagashield/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sebastianmechno-sys/sagashield/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/sebastianmechno-sys/sagashield/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/sebastianmechno-sys/sagashield/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/sebastianmechno-sys/sagashield/releases/tag/v0.1.0
