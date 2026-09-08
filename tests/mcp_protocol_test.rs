@@ -56,7 +56,11 @@ async fn mcp_initialize_handshake() {
     assert_eq!(resp["result"]["protocolVersion"], "2024-11-05");
     assert!(resp["result"]["capabilities"]["tools"].is_object());
     assert_eq!(resp["result"]["serverInfo"]["name"], "sagashield-mcp");
-    assert_eq!(resp["result"]["serverInfo"]["version"], "0.1.0");
+    // Versionelive da Cargo.toml: nessun drift tra release e test.
+    assert_eq!(
+        resp["result"]["serverInfo"]["version"],
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Notifica di handshake: nessuna risposta, server vivo.
     let none = server
