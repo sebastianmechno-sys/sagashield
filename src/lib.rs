@@ -73,10 +73,13 @@ pub mod audit;
 pub mod dispatcher;
 pub mod error;
 pub mod fsm;
+pub mod knowledge;
 pub mod mcp;
+pub mod memory;
 #[cfg(feature = "python")]
 pub mod python;
 pub mod replay;
+pub mod router;
 pub mod security;
 pub mod tools;
 pub mod traits;
@@ -87,8 +90,20 @@ pub use audit::AuditExporter;
 pub use dispatcher::{AgentKernel, ToolRegistry};
 pub use error::{KernelError, KernelResult};
 pub use fsm::{AgentEvent, AgentState, StateMachine};
+pub use knowledge::{
+    Citation, GroundedHit, KnowledgeFabric, KnowledgeRecord, KnowledgeRetrieveTool, NewRecordInput,
+    RetrievalPolicy,
+};
 pub use mcp::McpServer;
+pub use memory::{
+    MemoryHit, MemoryKind, MemoryRecallTool, MemoryRecord, MemoryScope, MemoryStoreTool,
+    MemoryVault, NewMemoryInput, RecallPolicy,
+};
 pub use replay::{ReplayStep, ReplayTimeline, SessionReplay};
+pub use router::{
+    BackendCatalog, CloudBackend, InferenceRouter, LocalBackend, Quant, RoutePlan, RouterPlanTool,
+    SloPolicy, TaskSpec, estimate_vram_gb,
+};
 pub use security::{SecurityGuard, SecurityPolicy};
 pub use traits::TransactionalTool;
 pub use types::{ActionStatus, DlqEntry, PersistedAction, PruneReport, ToolContext, ToolOutput};

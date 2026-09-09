@@ -1,16 +1,21 @@
 # SagaShield
 
-### ACID transactional runtime, security guardrail & MCP server for autonomous AI agents
+### ACID transactional runtime + governed knowledge + portable memory + cost-aware router for autonomous AI agents
 
 [![rust](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://www.rust-lang.org)
-[![build](https://img.shields.io/badge/build-passing%2037%2F37-brightgreen.svg)](#testing)
+[![build](https://img.shields.io/badge/build-passing%2053%2F53-brightgreen.svg)](#testing)
 [![unwrap](https://img.shields.io/badge/unwrap-zero-blue.svg)](#engineering-standards)
 [![license](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](#license)
 [![eval](https://img.shields.io/badge/eval-50%2F50%20scenarios-brightgreen.svg)](BENCHMARK.md)
 
-> Give your AI agents what databases have had for 40 years: **transactions** — plus a bouncer at the door.
+> Give your AI agents what databases have had for 40 years: **transactions** — plus a bouncer at the door, a librarian with receipts, a memory that moves with the user, and a router that respects VRAM, cost and watts.
 
 SagaShield is a high-performance Rust runtime for autonomous AI agents. Every tool call runs inside a **Saga transaction**: it is authorized by a deterministic finite-state machine, screened by a Step-0 security guard, logged to a SQLite write-ahead log, and — on failure — compensated in reverse order. A crashed step rolls back instead of corrupting state; a prompt-injected step never runs at all.
+
+New in v0.2.0 (SOVRA stack, all local-first, zero extra services):
+- **L1 Knowledge Fabric** (`knowledge.retrieve`): lineage `source/owner/version/license`, TTL + quarantine, citations, `INSUFFICIENT_GROUNDING` instead of hallucinating.
+- **L4 Memory Vault** (`memory.store` / `memory.recall`): portable memory scoped by `(tenant, agent, user)`, dedup, promotion on access, explicit decay via `prune_weak`.
+- **L0 Inference Router** (`router.plan`): VRAM-fit + context-fit + SLO cost/latency/Wh, local-first with cloud burst, `NO_FEASIBLE_BACKEND` instead of silent degradation.
 
 - [Why SagaShield](#why-sagashield)
 - [How it works](#how-it-works)

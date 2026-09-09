@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v0.2.0-unreleased
+## [0.2.0] — 2026-09-09
+
+### Added
+- L1 Knowledge Fabric (`src/knowledge.rs`, tool `knowledge.retrieve`):
+  lineage source/owner/version/license, TTL + quarantine, license gate,
+  citations, `InsufficientGrounding` / `INSUFFICIENT_GROUNDING` no-memory-fallback.
+- L4 Memory Vault (`src/memory.rs`, tools `memory.store` / `memory.recall`):
+  scope `(tenant, agent, user_id)`, dedup idempotente, promozione accessi,
+  `prune_weak` decay esplicito. Store compensabile via forget.
+- L0 Inference Router (`src/router.rs`, tool `router.plan`):
+  stima VRAM pesi + KV-cache, gate VRAM-fit / context-fit / SLO
+  costo-latenza-Wh, preset consumer 16GB, `NO_FEASIBLE_BACKEND` esplicito.
+- Test: 12 nuovi (4 knowledge + 4 memory + 4 router) + 5 unit; suite 53 verdi.
+- Esempi: `knowledge_demo`, `memory_demo`, `router_demo`.
 
 ## [0.1.2] — 2026-09-08
 

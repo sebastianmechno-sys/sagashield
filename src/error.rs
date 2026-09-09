@@ -75,6 +75,17 @@ pub enum KernelError {
     /// Azione irreversibile in attesa di approvazione umana (2-Phase Commit).
     #[error("approval required for irreversible tool '{tool_name}' (token: {token})")]
     ApprovalRequired { tool_name: String, token: String },
+
+    /// Retrieval senza grounding sufficiente (L1 Knowledge Fabric).
+    ///
+    /// Il kernel deve rispondere `INSUFFICIENT_GROUNDING` invece di
+    /// inventare: nessun side-effect, nessuna risposta da memoria.
+    #[error("insufficient grounding for query '{query}': {reason}")]
+    InsufficientGrounding { query: String, reason: String },
+
+    /// Record contattato ma stale/quarantenato (TTL superato).
+    #[error("stale context '{record_id}': {detail}")]
+    StaleContext { record_id: String, detail: String },
 }
 
 /// Scorciatoia per i risultati del kernel.
